@@ -1,64 +1,72 @@
 import React, { Component } from 'react';
 import './Board.css';
-var Pixel = React.createClass({
-		  handleMouseMove: function(e) {
-		  this.props.onPixelActive(this.props.x, this.props.y)
-		    },
-          getStyle: function() {
-		    	return { fill: 'rgb(' + this.props.r + ',' + this.props.g + ',' + this.props.b + ')' }
-		    },
-		    
-		    render: function() {
-		        return (<rect onMouseMove={this.handleMouseMove}
-		        		style={this.getStyle()} x={this.props.x} y={this.props.y} 
-		        		width={this.props.width} height={this.props.height}/>);
-		    }
-		});
+import ReactDOM from 'react-dom';
+var draw_data = [];
+var draw_rdata = [];
+var temp = [];
+var drawing = [];
+var canvas,ctx;
 
+class Grid extends React.Component {
 
-		var Grid = React.createClass({
+   constructor() {
+    super();
+    this.state = {
+      draw : false,
+      data : draw_data,
+      r_data : draw_rdata;
+          };
+   }
+   
+   componentDidMount() {
+      canvas = ReactDOM.findDOMNode(this.refs.Canvas);
+      
+    ctx = canvas.getContext('2d');  
+     ctx.fillStyle = 'rgb(200,0,0)';   
+    }
 
-			getInitialState: function() {
-				var pixels = new Array(i);
-				for(var i=0; i<this.props.x; i++){
-						pixels[i] = new Array(j);
-						for(var j=0; j<this.props.y; j++){
-							pixels[i][j] = {r:255, g:255, b:255};
-						}
-					}	
-		        return {pixels:pixels, drawing:false};
-		    },
-
-		    handleMouseDown: function(e) {
-		    	this.setState({drawing:true});
-		    },
-
-		    handleMouseUp: function(e) {
-		    	this.setState({drawing:false});
-		    },
-
-		    handlePixelActive: function(x, y){
-		    	//console.log(x + "," + y);
-		    	if(this.state.drawing) {
-		    		var newPixels = this.state.pixels.slice();
-		    		newPixels[x][y] = {r:0, g:0, b:0};
-		    		this.setState({pixels:newPixels});
-		    		/*this.state.pixels[x][y] = {r:0, g:0, b:0};
-		    		this.forceUpdate();*/
-		    	}
-		    },
-
-		    render: function() {
-		    	var pixelList = [];
-		    	for(var i=0; i<this.props.x; i++){
-						for(var j=0; j<this.props.y; j++) {
-							var p = this.state.pixels[i][j];
-		    				pixelList.push(<Pixel height="1" width="1" x={i} y={j} r={p.r} g={p.g} b={p.b} onPixelActive={this.handlePixelActive}/>);
-		    			}
-		    		}
-		    	var viewBox = "0 0 " + this.props.x + " " + this.props.y;
-		        return (<svg style={{border:"1px solid black"}} width={this.props.width} height={this.props.height} 
-		        	viewBox={viewBox} onMouseDown={this.handleMouseDown} onMouseUp={this.handleMouseUp} >{pixelList}</svg>);
-		    }
-		});
-export default Grid
+    handleMouseMove = (e) => {
+        if(this.state.draw===true){
+        
+        var x = e.clientX;
+        var y = e.clientY;
+        temp.push([x,y]);
+        
+        ctx.moveTo(temp[0][0], temp[0][1]);
+        
+        for (var i = 1; i < temp.length - 2; i += 1){
+        
+        var xc = (temp[i][0] + temp[i+1][0]) / 2;
+        var yc = (temp[i][1] + temp[i+1][1]) / 2;
+        ctx.quadraticCurveTo(temp[i][0],temp[i][1], xc, yc);
+        ctx.stroke();
+        }
+       
+         
+        
+        //ctx.quadraticCurveTo(temp[i][0],temp[i][1], temp[i+1][0],temp[i+1][1]);
+        
+     
+        }
+    }
+   
+    handleMouseDown = () => {
+            this.setState({
+                draw : true
+            });
+    }
+        
+    handleMouseUp = () => {
+           draw_data.push(temp);
+           this.setState({
+                draw : false,
+                data : draw_data
+           })
+           temp = [];
+           }
+    render(){
+       return <div id="board"><canvas width="1000px" height="630px" ref="Canvas" onMouseDown={this.handleMouseDown} onMouseUp={this.handleMouseUp} onMouseMove={this.handleMouseMove}></canvas></div> 
+    }
+  
+}
+export default Grid;
